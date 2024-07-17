@@ -1,0 +1,19 @@
+.App {
+    text-align: center;
+    width: 30rem;
+    margin: 0 auto;
+    padding: 1rem;
+    background-color: beige;
+  }
+  
+  
+  .todoContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+  }
+  /* Add this CSS to style.css or an equivalent CSS file */
+    .completed {
+      text-decoration: line-through;
+    }
