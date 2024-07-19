@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="task">
+	<select id="findAll" resultType="taskvo">
+		<![CDATA[
+			select no, name, done, card_no
+				from task
+		    order by no desc
+		]]>
+	</select>
+	
+	<select id="findByCardNo" parameterType="long" resultType="taskvo">
+		<![CDATA[
+			select no, name, done, card_no
+				from task
+				where card_no=#{cardNo}
+		    order by no desc
+		]]>
+	</select>
+
+	<insert id="insert" parameterType="taskvo">
+		<![CDATA[
+		insert
+		  into task
+		values (null, #{name}, #{done}, #{cardNo})
+		]]>
+		<selectKey keyProperty="no" resultType="long" order="AFTER">
+			<![CDATA[
+			select last_insert_id()
+			]]>		
+		</selectKey>
+	</insert>
+	
+	<delete id="deleteByNo" parameterType="long">
+		<![CDATA[
+		delete 
+			from task
+			where no = #{no }
+		]]>
+	</delete>
+	
+	<update id="update" parameterType="taskvo">
+		<choose>
+			<when test='name == ""'>
+				<![CDATA[
+				update task 
+					set done=#{done },
+					card_no=#{cardNo } 
+					where no=#{no }
+				]]>
+			</when>
+			<when test='done == ""'>
+				<![CDATA[
+				update task 
+					set name=#{name }, 
+					card_no=#{cardNo }
+					where no=#{no }
+				]]>
+			</when>
+			<when test='cardNo == ""'>
+				<![CDATA[
+				update task 
+					set name=#{name }, 
+					done=#{done },
+					where no=#{no }
+				]]>
+			</when>
+			<otherwise>
+				<![CDATA[
+				update task 
+					set name=#{name }, 
+						done=#{done },
+						card_no=#{cardNo }
+					where no=#{no }
+				]]>
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

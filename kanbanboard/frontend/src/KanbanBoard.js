@@ -1,10 +1,22 @@
 import React from 'react';
-import { useState } from "react";
 import './styles.css';
 import CreateTodo from './components/CreateTodo';
 import TodoItem from './components/TodoItem';
+import axios from 'axios';
+import {useEffect, useState} from "react";
 
 function KanbanBoard() {
+  const [cardTasksFullList, setCardTasksList] = useState([]);
+
+    useEffect(() => {
+      axios.get('http://localhost:8080/api')
+        .then((res) => {
+          console.log(res.data); // 응답 데이터를 로그로 출력
+          setCardTasksList(res.data.cardTasksResponseDTO);
+        })
+        .catch(error => console.log(error))
+    })
+
   const [inputText, setInputText] = useState("");
   const [todoList, setTodoList] = useState([
     {
@@ -51,19 +63,20 @@ function KanbanBoard() {
     <div className="Kanban_Board">
       <div className="Card_List">
         <h1>To Do</h1>
-        <div className="_Card">
-          <div className="Card_Title  Card_Title_Open">Stroy Board 작성</div>
-          <div className="Card_Details">
-            기능 기반의 화면 목업 작업
+        {cardTasksFullList && cardTasksFullList.map((cardTasks) => (
+          <div className="_Card" key={cardTasks.cardInfo.no}>
+            <div className="Card_Title  Card_Title_Open">{cardTasks.cardInfo.title}</div>
+            <div className="Card_Details">
+            {cardTasks.cardInfo.description}
 
           <div className="Task_List">
             <ul>
-              {todoItems.map((item) => (
-                <li class="_Task" key={item.id}>
+              {cardTasks.taskInfoList.map((taskInfo) => (
+                <li class="_Task" key={taskInfo.no}>
                 <TodoItem
-                  id={item.id}
-                  text={item.text}
-                  completed={item.completed}
+                  id={taskInfo.no}
+                  text={taskInfo.name}
+                  completed={taskInfo.done}
                   onClickDelete={textDeleteHandler}
                   onClickComplete={handleComplete}
                 />
@@ -81,6 +94,7 @@ function KanbanBoard() {
           </div>
         </div>
         </div>
+        ))}
       </div>
       
       <div className="Card_List">

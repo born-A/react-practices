@@ -6,8 +6,12 @@
     </settings>
     	
 	<typeAliases>
-	</typeAliases>
+		<typeAlias type="com.poscodx.kanbanboard.vo.TaskVo" alias="taskvo" />
+		<typeAlias type="com.poscodx.kanbanboard.vo.CardVo" alias="cardvo" />
+    </typeAliases>	
 	
 	<mappers>
+		<mapper resource="mybatis/mappers/task.xml" />
+		<mapper resource="mybatis/mappers/card.xml" />
 	</mappers>
 </configuration>
