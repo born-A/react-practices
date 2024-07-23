@@ -5,10 +5,10 @@ import TodoItem from './components/TodoItem';
 import axios from 'axios';
 
 function KanbanBoard() {
-  const [visibleCard, setVisibleCard] = useState(null);
   const [cardTasksFullList, setCardTasksList] = useState([]);
   const [inputText, setInputText] = useState("");
   const [todoList, setTodoList] = useState([]);
+  const [visibleCards, setVisibleCards] = useState({}); // 카드의 visibility 상태를 관리하는 객체
 
   useEffect(() => {
     axios.get('http://localhost:8080/api')
@@ -69,7 +69,10 @@ function KanbanBoard() {
   };
 
   const handleCardClick = (cardNo) => {
-    setVisibleCard(visibleCard === cardNo ? null : cardNo);
+    setVisibleCards(prevVisibleCards => ({
+      ...prevVisibleCards,
+      [cardNo]: !prevVisibleCards[cardNo]
+    }));
   };
 
   return (
@@ -77,22 +80,24 @@ function KanbanBoard() {
       <div className="Card_List">
         <h1>To Do</h1>
         {cardTasksFullList && cardTasksFullList.map((cardTasks) => {
-          // 조건에 따른 클래스 이름 결정
-          const cardTitleClass = visibleCard === cardTasks.cardInfo.no
+          const cardNo = cardTasks.cardInfo.no;
+          const isVisible = visibleCards[cardNo]; // 해당 카드의 visibility 상태
+
+          const cardTitleClass = isVisible
             ? "Card_Title Card_Title_Open"
             : "Card_Title";
 
           return (
-            <div className="_Card" key={cardTasks.cardInfo.no}>
+            <div className="_Card" key={cardNo}>
               <div
                 className={cardTitleClass}
-                onClick={() => handleCardClick(cardTasks.cardInfo.no)}
+                onClick={() => handleCardClick(cardNo)}
               >
                 {cardTasks.cardInfo.title}
               </div>
-              <div className="Card_Details">
-                {cardTasks.cardInfo.description}
-                {visibleCard === cardTasks.cardInfo.no && (
+              {isVisible && (
+                <div className="Card_Details">
+                  {cardTasks.cardInfo.description}
                   <div className="Task_List">
                     <ul>
                       {cardTasks.taskInfoList.map((taskInfo) => (
@@ -109,12 +114,12 @@ function KanbanBoard() {
                     </ul>
                     <CreateTodo
                       onChange={textTypingHandler}
-                      onSubmit={(e) => textInputHandler(e, cardTasks.cardInfo.no)}
+                      onSubmit={(e) => textInputHandler(e, cardNo)}
                       inputText={inputText}
                     />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -123,9 +128,9 @@ function KanbanBoard() {
       <div className="Card_List">
         <h1>Doing</h1>
         <div className="_Card">
-          <div className="Card_Title">React Study</div>
+          <div className="Card_Title">최종 프로젝트 성공</div>
           <div className="Card_Details">
-            React.JS 공부 하기
+            API 명세서 작성하기
           </div>
         </div>
       </div>
