@@ -1,139 +1,159 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './styles.css';
 import CreateTodo from './components/CreateTodo';
 import TodoItem from './components/TodoItem';
 import axios from 'axios';
-import {useEffect, useState} from "react";
 
 function KanbanBoard() {
+  const [visibleCard, setVisibleCard] = useState(null);
   const [cardTasksFullList, setCardTasksList] = useState([]);
-
-    useEffect(() => {
-      axios.get('http://localhost:8080/api')
-        .then((res) => {
-          console.log(res.data); // 응답 데이터를 로그로 출력
-          setCardTasksList(res.data.cardTasksResponseDTO);
-        })
-        .catch(error => console.log(error))
-    })
-
   const [inputText, setInputText] = useState("");
-  const [todoList, setTodoList] = useState([
-    {
-      id: 1,
-      text: "할일 1",
-      completed: false,
-    },
-    {
-      id: 2,
-      text: "할일 2",
-      completed: false,
-    },
-  ]);
-  
+  const [todoList, setTodoList] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:8080/api')
+      .then((res) => {
+        setCardTasksList(res.data.data.cardTasksResponseDTO);
+      })
+      .catch(error => console.log(error));
+  }, []);
+
   const textTypingHandler = (e) => {
     setInputText(e.target.value);
   };
 
-  const textInputHandler = (event) => {
-    event.preventDefault();
+  const textInputHandler = (e, no) => {
+    e.preventDefault();
     const newTodo = {
-      id: Date.now(),
-      text: inputText,
-      completed: false,
+      name: inputText,
+      done: "N",
+      cardNo: no
     };
-    setTodoList([...todoList, newTodo]);
-    setInputText("");
+
+    axios.post('http://localhost:8080/api', newTodo)
+      .then(() => {
+        setTodoList([...todoList, newTodo]);
+        setInputText("");
+      })
+      .catch((error) => {
+        console.error("Failed to create todo:", error);
+      });
   };
 
   const textDeleteHandler = (id) => {
-    setTodoList(todoList.filter((todoItem) => todoItem.id !== id));
+    const params = { no: id };
+    axios.delete('http://localhost:8080/api/delete', { params })
+      .then(() => {
+        setTodoList(todoList.filter((todoItem) => todoItem.id !== id));
+        console.log(`Item with id ${id} deleted successfully.`);
+      })
+      .catch(error => {
+        console.error(`Failed to delete item with id ${id}:`, error);
+      });
   };
 
-  const handleComplete = (id) => {
-    setTodoList(todoList.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+  const handleComplete = (no) => {
+    const newDoneStatus = (cardTasksFullList.find(card =>
+      card.taskInfoList.some(task => task.no === no)
+    )?.taskInfoList.find(task => task.no === no)?.done === "Y") ? "N" : "Y";
+
+    axios.put(`http://localhost:8080/api/update?no=${no}&done=${newDoneStatus}`)
+      .then(() => {
+        setTodoList(todoList.map(todo =>
+          todo.no === no ? { ...todo, done: newDoneStatus } : todo
+        ));
+      })
+      .catch((error) => {
+        console.error("Failed to update todo:", error);
+      });
   };
 
-  const todoItems = todoList.filter(item => !item.completed);
-  const doneItems = todoList.filter(item => item.completed);
+  const handleCardClick = (cardNo) => {
+    setVisibleCard(visibleCard === cardNo ? null : cardNo);
+  };
 
   return (
     <div className="Kanban_Board">
       <div className="Card_List">
         <h1>To Do</h1>
-        {cardTasksFullList && cardTasksFullList.map((cardTasks) => (
-          <div className="_Card" key={cardTasks.cardInfo.no}>
-            <div className="Card_Title  Card_Title_Open">{cardTasks.cardInfo.title}</div>
-            <div className="Card_Details">
-            {cardTasks.cardInfo.description}
+        {cardTasksFullList && cardTasksFullList.map((cardTasks) => {
+          // 조건에 따른 클래스 이름 결정
+          const cardTitleClass = visibleCard === cardTasks.cardInfo.no
+            ? "Card_Title Card_Title_Open"
+            : "Card_Title";
 
-          <div className="Task_List">
-            <ul>
-              {cardTasks.taskInfoList.map((taskInfo) => (
-                <li class="_Task" key={taskInfo.no}>
-                <TodoItem
-                  id={taskInfo.no}
-                  text={taskInfo.name}
-                  completed={taskInfo.done}
-                  onClickDelete={textDeleteHandler}
-                  onClickComplete={handleComplete}
-                />
-                </li>
-                ))
-              }
-            </ul>
-            
-            <CreateTodo
-              onChange={textTypingHandler}
-              onSubmit={textInputHandler}
-              inputText={inputText}
-            />
-
-          </div>
-        </div>
-        </div>
-        ))}
+          return (
+            <div className="_Card" key={cardTasks.cardInfo.no}>
+              <div
+                className={cardTitleClass}
+                onClick={() => handleCardClick(cardTasks.cardInfo.no)}
+              >
+                {cardTasks.cardInfo.title}
+              </div>
+              <div className="Card_Details">
+                {cardTasks.cardInfo.description}
+                {visibleCard === cardTasks.cardInfo.no && (
+                  <div className="Task_List">
+                    <ul>
+                      {cardTasks.taskInfoList.map((taskInfo) => (
+                        <li className="_Task" key={taskInfo.no}>
+                          <TodoItem
+                            id={taskInfo.no}
+                            text={taskInfo.name}
+                            done={taskInfo.done}
+                            onClickDelete={() => textDeleteHandler(taskInfo.no)}
+                            onClickComplete={() => handleComplete(taskInfo.no)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                    <CreateTodo
+                      onChange={textTypingHandler}
+                      onSubmit={(e) => textInputHandler(e, cardTasks.cardInfo.no)}
+                      inputText={inputText}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
-      
+
       <div className="Card_List">
         <h1>Doing</h1>
-
         <div className="_Card">
           <div className="Card_Title">React Study</div>
           <div className="Card_Details">
             React.JS 공부 하기
           </div>
         </div>
-
       </div>
+
       <div className="Card_List">
         <h1>Done</h1>
         <div className="_Card">
-          <div className="Card_Title  Card_Title_Open">완료된 작업들</div>
+          <div className="Card_Title Card_Title_Open">완료된 작업들</div>
           <div className="Card_Details">
-
             <div className="Task_List">
               <ul>
-                {doneItems.map((item) => (
+                {/* {doneItems.map((item) => (
                   <li className="_Task" key={item.id}>
                     <TodoItem
                       id={item.id}
-                      text={item.text}
-                      completed={item.completed}
+                      text={item.name}
+                      done={item.done}
                       onClickDelete={textDeleteHandler}
                       onClickComplete={handleComplete}
                     />
                   </li>
-                ))}
+                ))} */}
               </ul>
-
             </div>
           </div>
         </div>
       </div>
-      </div>
+    </div>
   );
 }
 

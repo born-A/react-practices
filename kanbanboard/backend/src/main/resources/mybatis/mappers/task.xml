@@ -78,4 +78,13 @@
 		</choose>
 	</update>
 	
+	<update id="updateDone" parameterType="map">
+				<![CDATA[
+				update task 
+					set done=#{done }
+					where no=#{no }
+				]]>
+	</update>
+	
+	
 </mapper>

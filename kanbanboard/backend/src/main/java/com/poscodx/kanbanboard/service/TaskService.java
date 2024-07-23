@@ -50,4 +50,16 @@ public class TaskService {
 		}
 		return result;
 	}
+	
+	public int deleteByNo(Long taskNo) {
+		return taskRepository.deleteByNo(taskNo);
+	}
+
+	public void create(TaskVo vo) {
+		taskRepository.insert(vo);
+	}
+
+	public void updateDone(Long no, String done) {
+		taskRepository.updateDone(no, done);
+	}
 }

@@ -35,30 +35,28 @@ public class ApiController {
 					.body(JsonResult.success(taskService.getCards()));
 	}
 	
-//	@PostMapping("/api")
-//	public ResponseEntity<JsonResult> create(@RequestBody TaskVo vo) {
-//		log.info("Request[POST /api]:" + vo);
-//		
-//		taskRepository.insert(vo);
-//		
-//		return ResponseEntity
-//					.status(HttpStatus.OK)
-//					.body(JsonResult.success(vo));
-//	}
-//	
-//	@DeleteMapping("/api/delete/{no}")
-//	public void delete(@PathVariable Long no) {
-//		taskRepository.deleteByNo(no);
-//	}
-//	
-//	@PutMapping("/api/update")
-//	public ResponseEntity<JsonResult> update(@RequestBody TaskVo vo) {
-//		log.info("Request[PUT /api]:" + vo);
-//		
-//		taskRepository.update(vo);
-//		
-//		return ResponseEntity
-//				.status(HttpStatus.OK)
-//				.body(JsonResult.success(vo));
-//	}
+	@PostMapping("/api")
+	public ResponseEntity<JsonResult> create(@RequestBody TaskVo vo) {
+		log.info("Request[POST /api]:" + vo);
+		
+		taskService.create(vo);
+		
+		return ResponseEntity
+					.status(HttpStatus.OK)
+					.body(JsonResult.success(vo));
+	}
+	
+	@DeleteMapping("/api/delete")
+	public void delete(@RequestParam Long no) {
+		log.info("Request[DELETE /api/delete]");
+		int deleteByNo = taskService.deleteByNo(no);
+		log.info("jj"+deleteByNo);
+	}
+	
+	@PutMapping("/api/update")
+	public void updateDone(@RequestParam Long no, @RequestParam String done) {
+		log.info("Request[PUT /api]:" + no + "done : " + done);
+		
+		taskService.updateDone(no,done);
+	}
 }

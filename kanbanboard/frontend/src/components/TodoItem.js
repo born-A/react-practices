@@ -1,16 +1,14 @@
 import React from 'react';
 
-function TodoItem({ id, text, completed,  onClickDelete, onClickComplete}) {
-
+function TodoItem({ id, text, done, onClickDelete, onClickComplete }) {
   return (
     <div>
       <input 
-      type="checkbox" 
-      checked={completed} 
-      onChange={() => onClickComplete(id)} 
+        type="checkbox" 
+        checked={done === "Y"} 
+        onChange={() => onClickComplete(id)} 
       />
-
-      <span style={completed ? { textDecoration: "line-through" } : undefined}>{text}</span>
+        {text}
       <a className="Task_Remove" onClick={() => onClickDelete(id)}></a>
     </div>
   );
