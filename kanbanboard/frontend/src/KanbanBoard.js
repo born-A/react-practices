@@ -6,16 +6,19 @@ import axios from 'axios';
 
 function KanbanBoard() {
   const [cardTasksFullList, setCardTasksList] = useState([]);
-  const [inputTexts, setInputTexts] = useState({}); // 각 카드의 입력 텍스트를 저장하는 객체
-  const [todoList, setTodoList] = useState([]);
-  const [visibleCards, setVisibleCards] = useState({}); // 각 카드의 가시성 상태를 관리하는 객체
+  const [inputTexts, setInputTexts] = useState({});
+  const [visibleCards, setVisibleCards] = useState({});
 
-  useEffect(() => {
+  const fetchCardTasks = () => {
     axios.get('http://localhost:8080/api')
       .then((res) => {
         setCardTasksList(res.data.data.cardTasksResponseDTO);
       })
       .catch(error => console.log(error));
+  };
+
+  useEffect(() => {
+    fetchCardTasks();
   }, []);
 
   const textTypingHandler = (e, cardNo) => {
@@ -35,7 +38,7 @@ function KanbanBoard() {
 
     axios.post('http://localhost:8080/api', newTodo)
       .then(() => {
-        setTodoList([...todoList, newTodo]);
+        fetchCardTasks();
         setInputTexts({
           ...inputTexts,
           [cardNo]: "",
@@ -50,7 +53,7 @@ function KanbanBoard() {
     const params = { no: id };
     axios.delete('http://localhost:8080/api/delete', { params })
       .then(() => {
-        setTodoList(todoList.filter((todoItem) => todoItem.id !== id));
+        fetchCardTasks();
         console.log(`ID가 ${id}인 항목을 성공적으로 삭제했습니다.`);
       })
       .catch(error => {
@@ -59,15 +62,15 @@ function KanbanBoard() {
   };
 
   const handleComplete = (no) => {
-    const newDoneStatus = (cardTasksFullList.find(card =>
+    const card = cardTasksFullList.find(card =>
       card.taskInfoList.some(task => task.no === no)
-    )?.taskInfoList.find(task => task.no === no)?.done === "Y") ? "N" : "Y";
+    );
+    const task = card.taskInfoList.find(task => task.no === no);
+    const newDoneStatus = task.done === "Y" ? "N" : "Y";
 
     axios.put(`http://localhost:8080/api/update?no=${no}&done=${newDoneStatus}`)
       .then(() => {
-        setTodoList(todoList.map(todo =>
-          todo.no === no ? { ...todo, done: newDoneStatus } : todo
-        ));
+        fetchCardTasks();
       })
       .catch((error) => {
         console.error("할 일을 업데이트하지 못했습니다:", error);
@@ -87,7 +90,7 @@ function KanbanBoard() {
         <h1>To Do</h1>
         {cardTasksFullList && cardTasksFullList.map((cardTasks) => {
           const cardNo = cardTasks.cardInfo.no;
-          const isVisible = visibleCards[cardNo]; // 해당 카드의 가시성 상태
+          const isVisible = visibleCards[cardNo];
 
           const cardTitleClass = isVisible
             ? "Card_Title Card_Title_Open"
