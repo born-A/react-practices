@@ -6,9 +6,9 @@ import axios from 'axios';
 
 function KanbanBoard() {
   const [cardTasksFullList, setCardTasksList] = useState([]);
-  const [inputText, setInputText] = useState("");
+  const [inputTexts, setInputTexts] = useState({}); // 각 카드의 입력 텍스트를 저장하는 객체
   const [todoList, setTodoList] = useState([]);
-  const [visibleCards, setVisibleCards] = useState({}); // 카드의 visibility 상태를 관리하는 객체
+  const [visibleCards, setVisibleCards] = useState({}); // 각 카드의 가시성 상태를 관리하는 객체
 
   useEffect(() => {
     axios.get('http://localhost:8080/api')
@@ -18,25 +18,31 @@ function KanbanBoard() {
       .catch(error => console.log(error));
   }, []);
 
-  const textTypingHandler = (e) => {
-    setInputText(e.target.value);
+  const textTypingHandler = (e, cardNo) => {
+    setInputTexts({
+      ...inputTexts,
+      [cardNo]: e.target.value,
+    });
   };
 
-  const textInputHandler = (e, no) => {
+  const textInputHandler = (e, cardNo) => {
     e.preventDefault();
     const newTodo = {
-      name: inputText,
+      name: inputTexts[cardNo],
       done: "N",
-      cardNo: no
+      cardNo: cardNo
     };
 
     axios.post('http://localhost:8080/api', newTodo)
       .then(() => {
         setTodoList([...todoList, newTodo]);
-        setInputText("");
+        setInputTexts({
+          ...inputTexts,
+          [cardNo]: "",
+        });
       })
       .catch((error) => {
-        console.error("Failed to create todo:", error);
+        console.error("할 일을 생성하지 못했습니다:", error);
       });
   };
 
@@ -45,10 +51,10 @@ function KanbanBoard() {
     axios.delete('http://localhost:8080/api/delete', { params })
       .then(() => {
         setTodoList(todoList.filter((todoItem) => todoItem.id !== id));
-        console.log(`Item with id ${id} deleted successfully.`);
+        console.log(`ID가 ${id}인 항목을 성공적으로 삭제했습니다.`);
       })
       .catch(error => {
-        console.error(`Failed to delete item with id ${id}:`, error);
+        console.error(`ID가 ${id}인 항목을 삭제하지 못했습니다:`, error);
       });
   };
 
@@ -64,7 +70,7 @@ function KanbanBoard() {
         ));
       })
       .catch((error) => {
-        console.error("Failed to update todo:", error);
+        console.error("할 일을 업데이트하지 못했습니다:", error);
       });
   };
 
@@ -81,7 +87,7 @@ function KanbanBoard() {
         <h1>To Do</h1>
         {cardTasksFullList && cardTasksFullList.map((cardTasks) => {
           const cardNo = cardTasks.cardInfo.no;
-          const isVisible = visibleCards[cardNo]; // 해당 카드의 visibility 상태
+          const isVisible = visibleCards[cardNo]; // 해당 카드의 가시성 상태
 
           const cardTitleClass = isVisible
             ? "Card_Title Card_Title_Open"
@@ -113,9 +119,9 @@ function KanbanBoard() {
                       ))}
                     </ul>
                     <CreateTodo
-                      onChange={textTypingHandler}
+                      onChange={(e) => textTypingHandler(e, cardNo)}
                       onSubmit={(e) => textInputHandler(e, cardNo)}
-                      inputText={inputText}
+                      inputText={inputTexts[cardNo] || ""}
                     />
                   </div>
                 </div>
